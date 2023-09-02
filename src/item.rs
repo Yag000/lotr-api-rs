@@ -1,5 +1,4 @@
 use serde::Deserialize;
-use serde_aux::field_attributes::deserialize_number_from_string;
 
 #[derive(Deserialize, Debug)]
 pub struct Book {
@@ -8,25 +7,27 @@ pub struct Book {
 }
 
 #[derive(Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
 pub struct Movie {
     pub _id: String,
     pub name: String,
 
-    #[serde(deserialize_with = "deserialize_number_from_string")]
-    pub budget_in_millions: u32,
+    #[serde(rename = "runtimeInMinutes")]
+    pub runtime_in_minutes: f32,
 
-    #[serde(deserialize_with = "deserialize_number_from_string")]
-    pub box_office_revenue_in_millions: u32,
+    #[serde(rename = "budgetInMillions")]
+    pub budget_in_millions: f32,
 
-    #[serde(deserialize_with = "deserialize_number_from_string")]
+    #[serde(rename = "boxOfficeRevenueInMillions")]
+    pub box_office_revenue_in_millions: f32,
+
+    #[serde(rename = "academyAwardNominations")]
     pub academy_award_nominations: u32,
 
-    #[serde(deserialize_with = "deserialize_number_from_string")]
+    #[serde(rename = "academyAwardWins")]
     pub academy_award_wins: u32,
 
-    #[serde(deserialize_with = "deserialize_number_from_string")]
-    pub rotten_tomates_score: u32,
+    #[serde(rename = "rottenTomatoesScore")]
+    pub rotten_tomates_score: f32,
 }
 
 #[derive(Deserialize, Debug)]
@@ -39,24 +40,37 @@ pub struct Quote {
 }
 
 #[derive(Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
 pub struct Character {
     pub _id: String,
-    pub height: String,
-    pub gender: String,
-    pub birth: String,
-    pub spouse: String,
-    pub death: String,
-    pub realm: String,
-    pub hair: String,
+    pub height: Option<String>,
+    pub gender: Option<String>,
+    pub birth: Option<String>,
+    pub spouse: Option<String>,
+    pub death: Option<String>,
+    pub realm: Option<String>,
+    pub hair: Option<String>,
     pub name: String,
-    pub wiki_url: String,
+
+    #[serde(rename = "wikiUrl")]
+    pub wiki_url: Option<String>,
 }
 
 #[derive(Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
 pub struct Chapter {
     pub _id: String,
+
+    #[serde(rename = "chapterName")]
     pub chapter_name: String,
+
     pub book: String,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct Response<T> {
+    pub docs: Vec<T>,
+    pub total: u32,
+    pub limit: u32,
+    pub offset: u32,
+    pub page: u32,
+    pub pages: u32,
 }
