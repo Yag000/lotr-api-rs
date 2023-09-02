@@ -25,6 +25,7 @@ jobs:
       - name: Run tests
         env:
           API_TOKEN: ${{ secrets.API_TOKEN }}
+          RUST_BACKTRACE: 1
         run: cargo test
 
   fmt:
