@@ -97,7 +97,7 @@ impl Client {
 
     pub async fn get(&self, request: Request) -> Result<Vec<Item>, Error> {
         let item_type = if let Some(ref item_type) = request.second_item {
-            &item_type
+            item_type
         } else {
             &request.item_type
         };
