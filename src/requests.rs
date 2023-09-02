@@ -1,13 +1,13 @@
 use reqwest::header::{self, HeaderMap, HeaderValue};
 
-pub struct Requester {
+pub(crate) struct Requester {
     token: String,
 }
 impl Requester {
-    pub fn new(token: String) -> Self {
+    pub(crate) fn new(token: String) -> Self {
         Self { token }
     }
-    pub async fn get(&self, url: &str) -> Result<String, reqwest::Error> {
+    pub(crate) async fn get(&self, url: &str) -> Result<String, reqwest::Error> {
         let mut headers = HeaderMap::new();
         headers.insert(
             header::ACCEPT,

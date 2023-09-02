@@ -1,13 +1,40 @@
 use serde::Deserialize;
 
+pub enum Item {
+    Book,
+    Movie,
+    Quote,
+    Character,
+    Chapter,
+}
+
+impl Item {
+    pub fn get_url(&self) -> &str {
+        match self {
+            Item::Book => "book",
+            Item::Movie => "movie",
+            Item::Quote => "quote",
+            Item::Character => "character",
+            Item::Chapter => "chapter",
+        }
+    }
+}
+
 #[derive(Deserialize, Debug)]
-pub struct Response<T> {
-    pub docs: Vec<T>,
-    pub total: u32,
-    pub limit: u32,
-    pub offset: u32,
-    pub page: u32,
-    pub pages: u32,
+#[allow(dead_code)]
+pub(crate) struct Response<T> {
+    docs: Vec<T>,
+    total: u32,
+    limit: u32,
+    offset: u32,
+    page: u32,
+    pages: u32,
+}
+
+impl<T> Response<T> {
+    pub fn get_contents(self) -> Vec<T> {
+        self.docs
+    }
 }
 
 #[derive(Deserialize, Debug)]
@@ -73,4 +100,41 @@ pub struct Chapter {
     pub chapter_name: String,
 
     pub book: String,
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_movie_deserialize() {
+        let tests = vec![
+            r#"
+    {
+      "_id": "5cd95395de30eff6ebccde57",
+      "name": "The Hobbit Series",
+      "runtimeInMinutes": 462,
+      "budgetInMillions": 675,
+      "boxOfficeRevenueInMillions": 2932,
+      "academyAwardNominations": 7,
+      "academyAwardWins": 1,
+      "rottenTomatoesScore": 66
+    }"#,
+            r#"
+    {
+      "_id": "5cd95395de30eff6ebccde57",
+      "name": "The Hobbit Series",
+      "runtimeInMinutes": 462.1,
+      "budgetInMillions": 675.23,
+      "boxOfficeRevenueInMillions": 2932.31,
+      "academyAwardNominations": 7,
+      "academyAwardWins": 1,
+      "rottenTomatoesScore": 66.33333333
+    }"#,
+        ];
+        for json in tests {
+            println!("{}", json);
+            serde_json::from_str::<Movie>(json).unwrap();
+        }
+    }
 }

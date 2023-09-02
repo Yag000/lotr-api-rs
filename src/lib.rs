@@ -1,2 +1,3 @@
+pub mod client;
 pub mod item;
-pub mod requests;
+pub(crate) mod requests;
