@@ -1,6 +1,6 @@
 use crate::{
-    item::{Book, Chapter, Character, Movie, Quote, Response},
-    requests::Requester,
+    item::{Book, Chapter, Character, Item, ItemType, Movie, Quote, Response},
+    requests::{Request, Requester},
 };
 
 #[derive(Debug)]
@@ -43,7 +43,7 @@ impl Client {
         }
     }
 
-    async fn request<T>(&self, url: &str) -> Result<Response<T>, Error>
+    async fn request_with_url<T>(&self, url: &str) -> Result<Response<T>, Error>
     where
         T: serde::de::DeserializeOwned,
     {
@@ -52,25 +52,80 @@ impl Client {
         Ok(response)
     }
 
+    async fn request<T>(&self, request: Request) -> Result<Response<T>, Error>
+    where
+        T: serde::de::DeserializeOwned,
+    {
+        let response = self.requester.get_from_request(request).await?;
+        let response: Response<T> = serde_json::from_str(&response)?;
+        Ok(response)
+    }
+
     pub async fn get_books(&self) -> Result<Vec<Book>, Error> {
-        Ok(self.request::<Book>("book").await?.get_contents())
+        Ok(self.request_with_url::<Book>("book").await?.get_contents())
     }
 
     pub async fn get_movies(&self) -> Result<Vec<Movie>, Error> {
-        Ok(self.request::<Movie>("movie").await?.get_contents())
+        Ok(self
+            .request_with_url::<Movie>("movie")
+            .await?
+            .get_contents())
     }
 
     /// Returns the first 1000 quotes, due to the default limit of 1000.
     pub async fn get_quotes(&self) -> Result<Vec<Quote>, Error> {
-        Ok(self.request::<Quote>("quote").await?.get_contents())
+        Ok(self
+            .request_with_url::<Quote>("quote")
+            .await?
+            .get_contents())
     }
 
     /// Returns the first 1000 characters, due to the default limit of 1000.
     pub async fn get_characters(&self) -> Result<Vec<Character>, Error> {
-        Ok(self.request::<Character>("character").await?.get_contents())
+        Ok(self
+            .request_with_url::<Character>("character")
+            .await?
+            .get_contents())
     }
 
     pub async fn get_chapters(&self) -> Result<Vec<Chapter>, Error> {
-        Ok(self.request::<Chapter>("chapter").await?.get_contents())
+        Ok(self
+            .request_with_url::<Chapter>("chapter")
+            .await?
+            .get_contents())
+    }
+
+    pub async fn get(&self, request: Request) -> Result<Vec<Item>, Error> {
+        let item_type = if let Some(ref item_type) = request.second_item {
+            &item_type
+        } else {
+            &request.item_type
+        };
+        match item_type {
+            ItemType::Book => {
+                let response = self.request::<Book>(request).await?;
+                Ok(response.into())
+            }
+
+            ItemType::Movie => {
+                let response = self.request::<Movie>(request).await?;
+                Ok(response.into())
+            }
+
+            ItemType::Quote => {
+                let response = self.request::<Quote>(request).await?;
+                Ok(response.into())
+            }
+
+            ItemType::Character => {
+                let response = self.request::<Character>(request).await?;
+                Ok(response.into())
+            }
+
+            ItemType::Chapter => {
+                let response = self.request::<Chapter>(request).await?;
+                Ok(response.into())
+            }
+        }
     }
 }

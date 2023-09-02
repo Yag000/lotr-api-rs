@@ -1,6 +1,38 @@
+use std::panic;
+
 use serde::Deserialize;
 
-pub enum Item {
+impl From<Response<Book>> for Vec<Item> {
+    fn from(response: Response<Book>) -> Self {
+        response.docs.into_iter().map(Item::from).collect()
+    }
+}
+
+impl From<Response<Movie>> for Vec<Item> {
+    fn from(response: Response<Movie>) -> Self {
+        response.docs.into_iter().map(Item::from).collect()
+    }
+}
+
+impl From<Response<Quote>> for Vec<Item> {
+    fn from(response: Response<Quote>) -> Self {
+        response.docs.into_iter().map(Item::from).collect()
+    }
+}
+
+impl From<Response<Character>> for Vec<Item> {
+    fn from(response: Response<Character>) -> Self {
+        response.docs.into_iter().map(Item::from).collect()
+    }
+}
+
+impl From<Response<Chapter>> for Vec<Item> {
+    fn from(response: Response<Chapter>) -> Self {
+        response.docs.into_iter().map(Item::from).collect()
+    }
+}
+
+pub enum ItemType {
     Book,
     Movie,
     Quote,
@@ -8,14 +40,65 @@ pub enum Item {
     Chapter,
 }
 
-impl Item {
+pub enum Item {
+    Book(Book),
+    Movie(Movie),
+    Quote(Quote),
+    Character(Character),
+    Chapter(Chapter),
+}
+
+impl From<Book> for Item {
+    fn from(book: Book) -> Self {
+        Item::Book(book)
+    }
+}
+
+impl From<Movie> for Item {
+    fn from(movie: Movie) -> Self {
+        Item::Movie(movie)
+    }
+}
+
+impl From<Quote> for Item {
+    fn from(quote: Quote) -> Self {
+        Item::Quote(quote)
+    }
+}
+
+impl From<Character> for Item {
+    fn from(character: Character) -> Self {
+        Item::Character(character)
+    }
+}
+
+impl From<Chapter> for Item {
+    fn from(chapter: Chapter) -> Self {
+        Item::Chapter(chapter)
+    }
+}
+
+impl ItemType {
     pub fn get_url(&self) -> &str {
         match self {
-            Item::Book => "book",
-            Item::Movie => "movie",
-            Item::Quote => "quote",
-            Item::Character => "character",
-            Item::Chapter => "chapter",
+            ItemType::Book => "book",
+            ItemType::Movie => "movie",
+            ItemType::Quote => "quote",
+            ItemType::Character => "character",
+            ItemType::Chapter => "chapter",
+        }
+    }
+}
+
+impl From<&str> for ItemType {
+    fn from(value: &str) -> Self {
+        match value {
+            "book" => ItemType::Book,
+            "movie" => ItemType::Movie,
+            "quote" => ItemType::Quote,
+            "character" => ItemType::Character,
+            "chapter" => ItemType::Chapter,
+            _ => panic!("Invalid item type"),
         }
     }
 }
