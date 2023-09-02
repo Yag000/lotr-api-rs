@@ -1,0 +1,16 @@
+[package]
+name = "lotr-api-wrapper"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+reqwest = "0.11.20"
+serde = { version = "1.0.188", features = ["derive"] }
+serde-aux = "4"
+serde_json = "1.0.105"
+tokio = { version = "1.32.0", features = ["rt-multi-thread", "macros"] }
