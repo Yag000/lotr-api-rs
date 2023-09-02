@@ -1,7 +1,9 @@
 name: Rust
 on:
   push:
+    branches: [master]
   pull_request:
+    branches: [master]
 
 env:
   CARGO_TERM_COLOR: always
@@ -21,6 +23,8 @@ jobs:
         uses: Swatinem/rust-cache@v2
 
       - name: Run tests
+        env:
+          API_TOKEN: ${{ secrets.API_TOKEN }}
         run: cargo test
 
   fmt:
