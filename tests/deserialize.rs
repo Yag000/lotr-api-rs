@@ -44,7 +44,7 @@ fn test_movie_unit() {
 #[tokio::test]
 async fn test_movie() {
     let json = get_json("movie").await;
-   serde_json::from_str::<Response<Movie>>(&json).unwrap();
+    serde_json::from_str::<Response<Movie>>(&json).unwrap();
 }
 
 #[tokio::test]
