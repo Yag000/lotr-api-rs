@@ -3,6 +3,8 @@ use crate::{
     requests::{Request, Requester},
 };
 
+/// The error type for this crate.
+/// It is used to harmonize the error types of the dependencies.
 #[derive(Debug)]
 pub struct Error {
     pub message: String,
@@ -19,7 +21,7 @@ impl std::fmt::Display for Error {
 impl From<reqwest::Error> for Error {
     fn from(error: reqwest::Error) -> Self {
         Self {
-            message: error.to_string(),
+            message: format!("reqwest error: {}", error),
         }
     }
 }
@@ -27,16 +29,33 @@ impl From<reqwest::Error> for Error {
 impl From<serde_json::Error> for Error {
     fn from(error: serde_json::Error) -> Self {
         Self {
-            message: error.to_string(),
+            message: format!("serde_json error: {}", error),
         }
     }
 }
 
+/// The client for the one api to rule them all.
+/// It is used to make requests to the API.
+///
+/// # Examples
+/// ```rust, no_run
+/// use lotr_api_wrapper::Client;
+///
+/// #[tokio::main]
+/// async fn main() {
+///     let client = Client::new("your_token".to_string());
+///     let books = client.get_books().await.unwrap();
+///     // ...
+/// }
+/// ```
 pub struct Client {
     requester: Requester,
 }
 
 impl Client {
+    /// Creates a new client with the given token.
+    /// The token is used to authenticate the requests.
+    /// You can get a token from <https://the-one-api.dev/>.
     pub fn new(token: String) -> Self {
         Self {
             requester: Requester::new(token),
@@ -61,10 +80,12 @@ impl Client {
         Ok(response)
     }
 
+    /// Returns all books.
     pub async fn get_books(&self) -> Result<Vec<Book>, Error> {
         Ok(self.request_with_url::<Book>("book").await?.get_contents())
     }
 
+    /// Returns all movies.
     pub async fn get_movies(&self) -> Result<Vec<Movie>, Error> {
         Ok(self
             .request_with_url::<Movie>("movie")
@@ -88,6 +109,7 @@ impl Client {
             .get_contents())
     }
 
+    /// Returns all chapters.
     pub async fn get_chapters(&self) -> Result<Vec<Chapter>, Error> {
         Ok(self
             .request_with_url::<Chapter>("chapter")
@@ -95,6 +117,7 @@ impl Client {
             .get_contents())
     }
 
+    /// Returns the items of the given custom request.
     pub async fn get(&self, request: Request) -> Result<Vec<Item>, Error> {
         let item_type = if let Some(ref item_type) = request.second_item {
             item_type

@@ -8,7 +8,7 @@ license = "MIT OR Apache-2.0"
 readme = "README.md"
 homepage = "https://github.com/Yag000/lotr-api-rs"
 repository = "https://github.com/Yag000/lotr-api-rs"
-documentation = "https://github.com/Yag000/wallshift"
+documentation = "https://docs.rs/lotr_api_wrapper"
 keywords = ["lotr", "lotr-api", "wrapper"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html

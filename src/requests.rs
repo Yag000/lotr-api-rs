@@ -1,14 +1,14 @@
 use reqwest::header::{self, HeaderMap, HeaderValue};
 
-use crate::item::ItemType;
+use crate::{attribute::Attribute, item::ItemType};
 
 pub struct Sort {
     sort_type: SortOrder,
-    sort_by: ItemType,
+    sort_by: Attribute,
 }
 
 impl Sort {
-    pub fn new(sort_type: SortOrder, sort_by: ItemType) -> Self {
+    pub fn new(sort_type: SortOrder, sort_by: Attribute) -> Self {
         Self { sort_type, sort_by }
     }
 
@@ -45,13 +45,59 @@ impl Default for RequestBuilder {
     }
 }
 
+/// This is a builder for [`Request`], it will allow you to build a [`Request`]
+/// with the desired parameters, and then call the `build` function to get the [`Request`]
+/// with the parameters you set.
+///
+/// It allows you to have a more rich and complex request that the defaults provided
+/// by the Client struct.
+///
+/// # Example
+/// ```
+/// use lotr_api_wrapper::{RequestBuilder, ItemType, Attribute, SortOrder, Sort, CharacterAttribute};
+///
+/// let request = RequestBuilder::new()
+///    .item_type(ItemType::Book)
+///    .sort(Sort::new(SortOrder::Ascending, Attribute::Character(CharacterAttribute::Hair)))
+///    .limit(10)
+///    .page(2)
+///    .offset(5)
+///    .build();
+///
+/// assert_eq!(request.get_url(), "character?limit=10?page=2?offset=5?sort=hair:asc");
+///
+/// ```
 impl RequestBuilder {
     pub fn new() -> Self {
         Self::default()
     }
 
+    /// Sets the item type for the request, it will override any previous
+    /// item type unless a sort is set, in which case nothing happens
+    /// since the sort item type will override the item type.
+    /// This allows us to always have a valid request.
+    ///
+    /// # Example
+    /// ```
+    /// use lotr_api_wrapper::{RequestBuilder, ItemType, Attribute, BookAttribute, Sort, SortOrder};
+    ///
+    /// let request = RequestBuilder::new()
+    ///   .item_type(ItemType::Book)
+    ///   .build();
+    ///
+    /// let request2 = RequestBuilder::new()
+    ///  .item_type(ItemType::Character)
+    ///  .sort(Sort::new(SortOrder::Ascending, Attribute::Book(BookAttribute::Name)))
+    ///  .item_type(ItemType::Character) // Even with this line, the item type will still be book
+    ///  .build();
+    ///
+    ///
+    ///  assert_eq!(request.get_url(), "book");
+    ///  assert_eq!(request2.get_url(), "book?sort=name:asc");
     pub fn item_type(mut self, item: ItemType) -> Self {
-        self.request.item_type = item;
+        if self.request.sort.is_none() {
+            self.request.item_type = item;
+        }
         self
     }
 
@@ -80,7 +126,11 @@ impl RequestBuilder {
         self
     }
 
+    /// Adds a sort to the request, it will override any previous
+    /// item type in order to guarantee that the request is valid
     pub fn sort(mut self, sort: Sort) -> Self {
+        let item_type: ItemType = sort.sort_by.clone().into();
+        self.request.item_type = item_type;
         self.request.sort = Some(sort);
         self
     }
@@ -113,7 +163,14 @@ impl Request {
         }
     }
     pub fn get_url(&self) -> String {
-        let mut url = self.item_type.get_url().to_string();
+        let mut url;
+        if let Some(sort) = &self.sort {
+            let item_type: ItemType = sort.sort_by.clone().into();
+            url = String::from(item_type.get_url());
+        } else {
+            url = String::from(self.item_type.get_url());
+        }
+
         if let Some(id) = &self.id {
             url.push_str(&format!("/{}", id));
         }
@@ -123,11 +180,11 @@ impl Request {
         if let Some(limit) = self.limit {
             url.push_str(&format!("?limit={}", limit));
         }
-        if let Some(offset) = self.offset {
-            url.push_str(&format!("?offset={}", offset));
-        }
         if let Some(page) = self.page {
             url.push_str(&format!("?page={}", page));
+        }
+        if let Some(offset) = self.offset {
+            url.push_str(&format!("?offset={}", offset));
         }
         if let Some(sort) = &self.sort {
             url.push_str(&format!("?{}", sort.get_url()));

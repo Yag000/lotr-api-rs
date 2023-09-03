@@ -1,6 +1,4 @@
-use std::panic;
-
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 impl From<Response<Book>> for Vec<Item> {
     fn from(response: Response<Book>) -> Self {
@@ -32,6 +30,7 @@ impl From<Response<Chapter>> for Vec<Item> {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ItemType {
     Book,
     Movie,
@@ -40,6 +39,7 @@ pub enum ItemType {
     Chapter,
 }
 
+#[derive(Debug, Clone, PartialEq)]
 pub enum Item {
     Book(Book),
     Movie(Movie),
@@ -103,7 +103,7 @@ impl From<&str> for ItemType {
     }
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 #[allow(dead_code)]
 pub(crate) struct Response<T> {
     docs: Vec<T>,
@@ -120,13 +120,13 @@ impl<T> Response<T> {
     }
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Book {
     pub _id: String,
     pub name: String,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Movie {
     pub _id: String,
     pub name: String,
@@ -150,7 +150,7 @@ pub struct Movie {
     pub rotten_tomates_score: f32,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Quote {
     pub _id: String,
     pub dialog: String,
@@ -159,7 +159,7 @@ pub struct Quote {
     pub id: String,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Character {
     pub _id: String,
     pub height: Option<String>,
@@ -175,7 +175,7 @@ pub struct Character {
     pub wiki_url: Option<String>,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Chapter {
     pub _id: String,
 
