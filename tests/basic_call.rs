@@ -1,9 +1,6 @@
 use lotr_api_wrapper::{
-    attribute::BookAttribute,
-    client::Client,
-    item::ItemType,
-    requests::{RequestBuilder, Sort, SortOrder},
-    Attribute, Item,
+    client::Client, item::ItemType, requests::RequestBuilder, Attribute, BookAttribute, Filter,
+    Item, Sort, SortOrder,
 };
 
 pub fn get_client() -> Client {
@@ -95,6 +92,25 @@ async fn test_sort() {
         .sort(Sort::new(
             SortOrder::Ascending,
             Attribute::Book(BookAttribute::Name),
+        ))
+        .build();
+    let books = client.get(request).await.unwrap();
+    assert!(books.len() > 0);
+    match books.first() {
+        Some(Item::Book(book)) => assert_eq!(book.name, "The Fellowship Of The Ring"),
+        _ => panic!("No books found"),
+    }
+}
+
+#[tokio::test]
+async fn test_filter() {
+    let client = get_client();
+    let request = RequestBuilder::default()
+        .item_type(ItemType::Book)
+        .filter(Filter::Match(
+            Attribute::Book(BookAttribute::Name),
+            lotr_api_wrapper::filter::Operation::Eq,
+            vec!["The Fellowship Of The Ring".to_string()],
         ))
         .build();
     let books = client.get(request).await.unwrap();

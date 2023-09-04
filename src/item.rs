@@ -1,35 +1,5 @@
 use serde::{Deserialize, Serialize};
 
-impl From<Response<Book>> for Vec<Item> {
-    fn from(response: Response<Book>) -> Self {
-        response.docs.into_iter().map(Item::from).collect()
-    }
-}
-
-impl From<Response<Movie>> for Vec<Item> {
-    fn from(response: Response<Movie>) -> Self {
-        response.docs.into_iter().map(Item::from).collect()
-    }
-}
-
-impl From<Response<Quote>> for Vec<Item> {
-    fn from(response: Response<Quote>) -> Self {
-        response.docs.into_iter().map(Item::from).collect()
-    }
-}
-
-impl From<Response<Character>> for Vec<Item> {
-    fn from(response: Response<Character>) -> Self {
-        response.docs.into_iter().map(Item::from).collect()
-    }
-}
-
-impl From<Response<Chapter>> for Vec<Item> {
-    fn from(response: Response<Chapter>) -> Self {
-        response.docs.into_iter().map(Item::from).collect()
-    }
-}
-
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ItemType {
     Book,
@@ -112,6 +82,36 @@ pub(crate) struct Response<T> {
     offset: u32,
     page: u32,
     pages: u32,
+}
+
+impl From<Response<Book>> for Vec<Item> {
+    fn from(response: Response<Book>) -> Self {
+        response.docs.into_iter().map(Item::from).collect()
+    }
+}
+
+impl From<Response<Movie>> for Vec<Item> {
+    fn from(response: Response<Movie>) -> Self {
+        response.docs.into_iter().map(Item::from).collect()
+    }
+}
+
+impl From<Response<Quote>> for Vec<Item> {
+    fn from(response: Response<Quote>) -> Self {
+        response.docs.into_iter().map(Item::from).collect()
+    }
+}
+
+impl From<Response<Character>> for Vec<Item> {
+    fn from(response: Response<Character>) -> Self {
+        response.docs.into_iter().map(Item::from).collect()
+    }
+}
+
+impl From<Response<Chapter>> for Vec<Item> {
+    fn from(response: Response<Chapter>) -> Self {
+        response.docs.into_iter().map(Item::from).collect()
+    }
 }
 
 impl<T> Response<T> {

@@ -1,37 +1,6 @@
 use reqwest::header::{self, HeaderMap, HeaderValue};
 
-use crate::{attribute::Attribute, item::ItemType};
-
-pub struct Sort {
-    sort_type: SortOrder,
-    sort_by: Attribute,
-}
-
-impl Sort {
-    pub fn new(sort_type: SortOrder, sort_by: Attribute) -> Self {
-        Self { sort_type, sort_by }
-    }
-
-    fn get_url(&self) -> String {
-        let mut url = String::from("sort=");
-        url.push_str(format!("{}:{}", self.sort_by.get_url(), self.sort_type.get_url()).as_str());
-        url
-    }
-}
-
-pub enum SortOrder {
-    Ascending,
-    Descending,
-}
-
-impl SortOrder {
-    fn get_url(&self) -> &str {
-        match self {
-            SortOrder::Ascending => "asc",
-            SortOrder::Descending => "desc",
-        }
-    }
-}
+use crate::{Filter, ItemType, Sort};
 
 pub struct RequestBuilder {
     request: Request,
@@ -150,6 +119,12 @@ impl RequestBuilder {
         self
     }
 
+    pub fn filter(mut self, filter: Filter) -> Self {
+        //TODO: add some logic similar to sort, maybe introduce results
+        self.request.filter = Some(filter);
+        self
+    }
+
     pub fn build(self) -> Request {
         self.request
     }
@@ -163,6 +138,7 @@ pub struct Request {
     offset: Option<u32>,
     page: Option<u32>,
     sort: Option<Sort>,
+    filter: Option<Filter>,
 }
 
 impl Request {
@@ -175,6 +151,7 @@ impl Request {
             offset: None,
             page: None,
             sort: None,
+            filter: None,
         }
     }
     pub fn get_url(&self) -> String {
@@ -203,6 +180,9 @@ impl Request {
         }
         if let Some(sort) = &self.sort {
             url.push_str(&format!("?{}", sort.get_url()));
+        }
+        if let Some(filter) = &self.filter {
+            url.push_str(&format!("?{}", filter.get_url()));
         }
         url
     }
