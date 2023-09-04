@@ -1,11 +1,11 @@
-use crate::Attribute;
+use crate::attribute::Attribute;
 
 /// A filter that can be used to filter the results of a request.
 ///
 /// # Examples
 /// ```
-/// use lotr_api_wrapper::{Filter, Attribute, Operation, ItemType, RequestBuilder, BookAttribute};
-/// let filter = Filter::Match(Attribute::Book(BookAttribute::Name),Operation::Eq, vec!["The Fellowship of the Ring".to_string()]);
+/// use lotr_api_wrapper::{Filter,  Operator, ItemType, RequestBuilder, attribute::{Attribute, BookAttribute}};
+/// let filter = Filter::Match(Attribute::Book(BookAttribute::Name),Operator::Eq, vec!["The Fellowship of the Ring".to_string()]);
 ///
 /// let request = RequestBuilder::new()
 ///     .item_type(ItemType::Book)
@@ -15,7 +15,7 @@ use crate::Attribute;
 /// assert_eq!(request.get_url(), "book?name=The Fellowship of the Ring");
 /// ```
 pub enum Filter {
-    Match(Attribute, Operation, Vec<String>),
+    Match(Attribute, Operator, Vec<String>),
     Exists(String, bool),
 }
 
@@ -40,7 +40,7 @@ impl Filter {
     }
 }
 
-pub enum Operation {
+pub enum Operator {
     Eq,
     Ne,
     Gt,
@@ -49,28 +49,31 @@ pub enum Operation {
     Lte,
 }
 
-impl Operation {
+impl Operator {
     fn get_url(&self) -> &str {
         match self {
-            Operation::Eq => "=",
-            Operation::Ne => "!=",
-            Operation::Gt => ">",
-            Operation::Lt => "<",
-            Operation::Gte => ">=",
-            Operation::Lte => "<=",
+            Operator::Eq => "=",
+            Operator::Ne => "!=",
+            Operator::Gt => ">",
+            Operator::Lt => "<",
+            Operator::Gte => ">=",
+            Operator::Lte => "<=",
         }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::{Attribute, BookAttribute, Filter, MovieAttribute, Operation};
+    use crate::{
+        attribute::{Attribute, BookAttribute, MovieAttribute},
+        Filter, Operator,
+    };
 
     #[test]
     fn test_match_eq() {
         let filter_eq = Filter::Match(
             Attribute::Book(BookAttribute::Name),
-            Operation::Eq,
+            Operator::Eq,
             vec!["The Fellowship of the Ring".to_string()],
         );
         assert_eq!(
@@ -83,7 +86,7 @@ mod tests {
     fn test_match_ne() {
         let filter_ne = Filter::Match(
             Attribute::Book(BookAttribute::Name),
-            Operation::Ne,
+            Operator::Ne,
             vec!["The Fellowship of the Ring".to_string()],
         );
         assert_eq!(
@@ -108,7 +111,7 @@ mod tests {
     fn test_include_and_exclude() {
         let filter = Filter::Match(
             Attribute::Book(BookAttribute::Name),
-            Operation::Eq,
+            Operator::Eq,
             vec![
                 "The Fellowship Of The Ring".to_string(),
                 "The Two Towers".to_string(),
@@ -123,7 +126,7 @@ mod tests {
 
         let filter = Filter::Match(
             Attribute::Book(BookAttribute::Name),
-            Operation::Ne,
+            Operator::Ne,
             vec![
                 "The Fellowship Of The Ring".to_string(),
                 "The Two Towers".to_string(),
@@ -143,7 +146,7 @@ mod tests {
             (
                 Filter::Match(
                     Attribute::Movie(MovieAttribute::BudgetInMillions),
-                    Operation::Gt,
+                    Operator::Gt,
                     vec!["10".to_string()],
                 ),
                 "budgetInMillions>10",
@@ -151,7 +154,7 @@ mod tests {
             (
                 Filter::Match(
                     Attribute::Movie(MovieAttribute::BudgetInMillions),
-                    Operation::Gte,
+                    Operator::Gte,
                     vec!["10".to_string()],
                 ),
                 "budgetInMillions>=10",
@@ -159,7 +162,7 @@ mod tests {
             (
                 Filter::Match(
                     Attribute::Movie(MovieAttribute::BudgetInMillions),
-                    Operation::Lt,
+                    Operator::Lt,
                     vec!["10".to_string()],
                 ),
                 "budgetInMillions<10",
@@ -167,7 +170,7 @@ mod tests {
             (
                 Filter::Match(
                     Attribute::Movie(MovieAttribute::BudgetInMillions),
-                    Operation::Lte,
+                    Operator::Lte,
                     vec!["10".to_string()],
                 ),
                 "budgetInMillions<=10",

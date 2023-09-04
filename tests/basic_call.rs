@@ -1,6 +1,9 @@
 use lotr_api_wrapper::{
-    client::Client, item::ItemType, requests::RequestBuilder, Attribute, BookAttribute, Filter,
-    Item, Sort, SortOrder,
+    attribute::{Attribute, BookAttribute},
+    client::Client,
+    item::ItemType,
+    request::RequestBuilder,
+    Filter, Item, Operator, Sort, SortOrder,
 };
 
 pub fn get_client() -> Client {
@@ -109,7 +112,7 @@ async fn test_filter() {
         .item_type(ItemType::Book)
         .filter(Filter::Match(
             Attribute::Book(BookAttribute::Name),
-            lotr_api_wrapper::filter::Operation::Eq,
+            Operator::Eq,
             vec!["The Fellowship Of The Ring".to_string()],
         ))
         .build();

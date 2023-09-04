@@ -2,6 +2,9 @@ use reqwest::header::{self, HeaderMap, HeaderValue};
 
 use crate::{Filter, ItemType, Sort};
 
+pub mod filter;
+pub mod sort;
+
 pub struct RequestBuilder {
     request: Request,
 }
@@ -23,7 +26,7 @@ impl Default for RequestBuilder {
 ///
 /// # Example
 /// ```
-/// use lotr_api_wrapper::{RequestBuilder, ItemType, Attribute, SortOrder, Sort, CharacterAttribute};
+/// use lotr_api_wrapper::{RequestBuilder, ItemType, Sort, SortOrder, attribute::{Attribute, BookAttribute, CharacterAttribute} };
 ///
 /// let request = RequestBuilder::new()
 ///    .item_type(ItemType::Book)
@@ -47,7 +50,7 @@ impl RequestBuilder {
     ///
     /// # Example
     /// ```
-    /// use lotr_api_wrapper::{RequestBuilder, ItemType, Attribute, BookAttribute, Sort, SortOrder};
+    /// use lotr_api_wrapper::{RequestBuilder, ItemType,  Sort, SortOrder, attribute::{Attribute, BookAttribute}};
     ///
     /// let request = RequestBuilder::new()
     ///   .item_type(ItemType::Book)

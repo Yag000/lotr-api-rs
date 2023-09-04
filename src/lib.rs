@@ -1,15 +1,16 @@
 //! TODO
 
 pub mod client;
-pub mod filter;
 pub mod item;
-pub mod requests;
-pub mod sort;
+pub mod request;
 
 pub use client::Client;
-pub use filter::*;
+pub use item::attribute;
 pub use item::Item;
 pub use item::ItemType;
-pub use requests::Request;
-pub use requests::RequestBuilder;
-pub use sort::*;
+pub use request::filter::Filter;
+pub use request::filter::Operator;
+pub use request::sort::Sort;
+pub use request::sort::SortOrder;
+pub use request::Request;
+pub use request::RequestBuilder;

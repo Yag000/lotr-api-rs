@@ -1,4 +1,10 @@
+//! This module contains the data structures for the items that are returned by the API.
+//! It also holds the [`Attribute`] enum and its derivatives, that contain the attributes
+//! that represent the fields of the items ( they are used for filtering and sorting ).
+
 use serde::{Deserialize, Serialize};
+
+pub mod attribute;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ItemType {

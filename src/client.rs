@@ -1,6 +1,6 @@
 use crate::{
     item::{Book, Chapter, Character, Item, ItemType, Movie, Quote, Response},
-    requests::{Request, Requester},
+    request::{Request, Requester},
 };
 
 /// The error type for this crate.
