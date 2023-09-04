@@ -65,7 +65,6 @@ impl Default for RequestBuilder {
 ///    .build();
 ///
 /// assert_eq!(request.get_url(), "character?limit=10?page=2?offset=5?sort=hair:asc");
-///
 /// ```
 impl RequestBuilder {
     pub fn new() -> Self {
@@ -101,11 +100,27 @@ impl RequestBuilder {
         self
     }
 
+    // Used to set the id when requesting for an specific item
     pub fn id(mut self, id: String) -> Self {
         self.request.id = Some(id);
         self
     }
 
+    /// Used when creating requests about another type :
+    /// For example:
+    ///
+    /// ```
+    /// use lotr_api_wrapper::{RequestBuilder, ItemType};
+    ///
+    /// let request = RequestBuilder::new()
+    ///     .item_type(ItemType::Character)
+    ///     .id("a_character_id".to_string())
+    ///     .second_item(ItemType::Quote)
+    ///     .build();
+    ///
+    /// assert_eq!(request.get_url(), "character/a_character_id/quote")
+    /// ```
+    ///
     pub fn second_item(mut self, second_item: ItemType) -> Self {
         self.request.second_item = Some(second_item);
         self
@@ -221,7 +236,10 @@ impl Requester {
             .send()
             .await
         {
-            Ok(response) => response.text().await,
+            Ok(response) => {
+                let response = response.error_for_status()?;
+                response.text().await
+            }
             Err(e) => Err(e),
         }
     }
