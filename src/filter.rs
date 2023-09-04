@@ -23,18 +23,17 @@ impl Filter {
     pub(crate) fn get_url(&self) -> String {
         match self {
             Filter::Match(attribute, operation, values) => {
-                let mut url = String::from(attribute.get_url());
+                let mut url = attribute.get_url();
                 url.push_str(operation.get_url());
                 url.push_str(&values.join(","));
                 url
             }
             Filter::Exists(attribute, exists) => {
                 let mut url = String::from(attribute);
-                url.push_str("=");
+                url.push('=');
                 if !exists {
-                    url.push_str("?");
+                    url.push('?');
                 }
-                url.push_str(&exists.to_string());
                 url
             }
         }
