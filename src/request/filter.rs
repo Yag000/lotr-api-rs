@@ -1,29 +1,35 @@
-use crate::attribute::Attribute;
+use crate::{attribute::Attribute, ItemType};
+
+use super::GetUrl;
 
 /// A filter that can be used to filter the results of a request.
 ///
 /// # Examples
 /// ```
-/// use lotr_api_wrapper::{Filter,  Operator, ItemType, attribute::{Attribute, BookAttribute},Request, request::{GetReq, FilterReq}, client::Client};
+/// use lotr_api_wrapper::{Filter,  Operator, GetUrl,
+///     attribute::{Attribute, BookAttribute}};
 ///
 ///
-/// let filter = Filter::Match(Attribute::Book(BookAttribute::Name),Operator::Eq, vec!["The Fellowship of the Ring".to_string()]);
+/// let filter = Filter::Match(
+///     Attribute::Book(BookAttribute::Name),
+///     Operator::Eq,
+///     vec!["The Fellowship of the Ring".to_string()]);
 ///
-/// let request = Request::Filter(FilterReq::new(GetReq::new(ItemType::Book), filter));
-///
-/// assert_eq!(request.get_url(), "book?name=The Fellowship of the Ring");
+/// assert_eq!(filter.get_url(), "name=The Fellowship of the Ring");
 /// ```
+
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Filter {
     Match(Attribute, Operator, Vec<String>),
-    Exists(String, bool),
+    Exists(Attribute, bool),
 }
 
-impl Filter {
-    pub(crate) fn get_url(&self) -> String {
+impl GetUrl for Filter {
+    fn get_url(&self) -> String {
         match self {
             Filter::Match(attribute, operation, values) => {
                 let mut url = attribute.get_url();
-                url.push_str(operation.get_url());
+                url.push_str(&operation.get_url());
                 url.push_str(&values.join(","));
                 url
             }
@@ -32,13 +38,23 @@ impl Filter {
                 if !exists {
                     url.push('!');
                 }
-                url.push_str(attribute);
+                url.push_str(&attribute.get_url());
                 url
             }
         }
     }
 }
 
+impl Filter {
+    pub(crate) fn get_item_type(&self) -> ItemType {
+        match self {
+            Filter::Match(attribute, _, _) => attribute.get_item_type(),
+            Filter::Exists(attribute, _) => attribute.get_item_type(),
+        }
+    }
+}
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum Operator {
     Eq,
     Ne,
@@ -48,8 +64,8 @@ pub enum Operator {
     Lte,
 }
 
-impl Operator {
-    fn get_url(&self) -> &str {
+impl GetUrl for Operator {
+    fn get_url(&self) -> String {
         match self {
             Operator::Eq => "=",
             Operator::Ne => "!=",
@@ -58,15 +74,15 @@ impl Operator {
             Operator::Gte => ">=",
             Operator::Lte => "<=",
         }
+        .into()
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        attribute::{Attribute, BookAttribute, MovieAttribute},
-        Filter, Operator,
-    };
+    use super::*;
+
+    use crate::attribute::{Attribute, BookAttribute, CharacterAttribute, MovieAttribute};
 
     #[test]
     fn test_match_eq() {
@@ -96,13 +112,13 @@ mod tests {
 
     #[test]
     fn test_exists() {
-        let filter_include = Filter::Exists("name".to_string(), true);
+        let filter_include = Filter::Exists(Attribute::Character(CharacterAttribute::Name), true);
         assert_eq!(filter_include.get_url(), "name".to_string());
     }
 
     #[test]
     fn test_dont_exist() {
-        let filter_exclude = Filter::Exists("name".to_string(), false);
+        let filter_exclude = Filter::Exists(Attribute::Character(CharacterAttribute::Name), false);
         assert_eq!(filter_exclude.get_url(), "!name".to_string());
     }
 

@@ -34,6 +34,12 @@ impl From<serde_json::Error> for Error {
     }
 }
 
+impl Error {
+    pub fn new(message: String) -> Self {
+        Self { message }
+    }
+}
+
 /// The client for the one api to rule them all.
 /// It is used to make requests to the API.
 ///

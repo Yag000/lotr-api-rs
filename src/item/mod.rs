@@ -86,8 +86,8 @@ pub(crate) struct Response<T> {
     total: u32,
     limit: u32,
     offset: u32,
-    page: u32,
-    pages: u32,
+    page: Option<u32>,
+    pages: Option<u32>,
 }
 
 impl From<Response<Book>> for Vec<Item> {

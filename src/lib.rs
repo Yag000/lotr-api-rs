@@ -13,4 +13,5 @@ pub use request::filter::Operator;
 pub use request::pagination;
 pub use request::sort::Sort;
 pub use request::sort::SortOrder;
+pub use request::GetUrl;
 pub use request::Request;

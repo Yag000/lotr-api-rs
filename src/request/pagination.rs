@@ -1,3 +1,15 @@
+/// This struct contains the date for the pagination of the API.
+///
+/// # Example
+///
+/// ```
+/// use lotr_api_wrapper::{GetUrl, request::pagination::Pagination};
+///
+/// let pagination = Pagination::new(10, 2, 1);
+///
+/// assert_eq!(pagination.get_url(), "limit=10&offset=2&page=1");
+///
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct Pagination {
     limit: u32,
     offset: u32,
@@ -14,20 +26,22 @@ impl Pagination {
     }
 
     pub fn get_url(&self) -> String {
-        let mut url = String::new();
+        let mut values = vec![];
+
         if self.limit != 0 {
-            url.push_str(&format!("?limit={}", self.limit));
+            values.push(format!("limit={}", self.limit));
         }
         if self.offset != 0 {
-            url.push_str(&format!("?offset={}", self.offset));
+            values.push(format!("offset={}", self.offset));
         }
         if self.page != 0 {
-            url.push_str(&format!("?page={}", self.page));
+            values.push(format!("page={}", self.page));
         }
-        url
-    }
-}
 
-pub trait AddPagination {
-    fn add_pagination(self, pagination: Pagination) -> Self;
+        if values.is_empty() {
+            String::new()
+        } else {
+            values.join("&")
+        }
+    }
 }

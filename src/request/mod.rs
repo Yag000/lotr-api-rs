@@ -1,183 +1,135 @@
 use reqwest::header::{self, HeaderMap, HeaderValue};
 
-use crate::{Filter, ItemType, Sort};
+use crate::{client::Error, Filter, ItemType, Sort};
 
-use self::pagination::{AddPagination, Pagination};
+use self::pagination::Pagination;
 
+pub mod attributes;
 pub mod filter;
 pub mod pagination;
 pub mod sort;
 
-pub enum Request {
-    Filter(FilterReq),
-    Sort(SortReq),
-    Get(GetReq),
-    /// This corresponds to requests of the type `book/{id}/chapter` etc...
-    Specific(SpecificReq),
+/// This trait is implemented by all structs that can be used to make a request to the API.
+/// It is used to get the url for the request.
+pub trait GetUrl {
+    /// Returns the url that represents the struct's part of the request.
+    fn get_url(&self) -> String;
+}
+
+pub struct RequestBuilder {
+    request: Request,
+}
+
+impl RequestBuilder {
+    pub fn new(item_type: ItemType) -> Self {
+        Self {
+            request: Request::new(item_type),
+        }
+    }
+
+    pub fn id(mut self, id: String) -> Self {
+        self.request.id = Some(id);
+        self
+    }
+
+    pub fn secondary_item_type(mut self, secondary_item_type: ItemType) -> Self {
+        self.request.secondary_item_type = Some(secondary_item_type);
+        self
+    }
+
+    pub fn sort(mut self, sort: Sort) -> Result<Self, Error> {
+        if sort.get_item_type() != self.request.get_item_type() {
+            return Err(Error::new(
+                "The sort attribute must be of the same type as the request".to_string(),
+            ));
+        }
+        self.request.sort = Some(sort);
+        Ok(self)
+    }
+
+    pub fn filter(mut self, filter: Filter) -> Result<Self, Error> {
+        if filter.get_item_type() != self.request.get_item_type() {
+            return Err(Error::new(
+                "The filter attribute must be of the same type as the request".to_string(),
+            ));
+        }
+        self.request.filter = Some(filter);
+        Ok(self)
+    }
+
+    pub fn pagination(mut self, pagination: Pagination) -> Self {
+        self.request.pagination = Some(pagination);
+        self
+    }
+
+    pub fn build(self) -> Request {
+        self.request
+    }
+}
+
+pub struct Request {
+    item_type: ItemType,
+    id: Option<String>,
+    secondary_item_type: Option<ItemType>,
+    sort: Option<Sort>,
+    filter: Option<Filter>,
+    pagination: Option<Pagination>,
 }
 
 impl Request {
-    pub fn get_url(&self) -> String {
-        match self {
-            Self::Filter(filter_req) => filter_req.get_url(),
-            Self::Sort(sort_req) => sort_req.get_url(),
-            Self::Get(get_req) => get_req.get_url(),
-            Self::Specific(specific_req) => specific_req.get_url(),
+    pub(crate) fn new(item_type: ItemType) -> Self {
+        Self {
+            item_type,
+            id: None,
+            secondary_item_type: None,
+            sort: None,
+            filter: None,
+            pagination: None,
         }
     }
 
     pub(crate) fn get_item_type(&self) -> ItemType {
-        match self {
-            Self::Filter(filter_req) => filter_req.get_req.item_type.clone(),
-            Self::Sort(sort_req) => sort_req.get_req.item_type.clone(),
-            Self::Get(get_req) => get_req.item_type.clone(),
-            Self::Specific(specific_req) => specific_req.second_item.clone(),
+        if let Some(secondary_item_type) = &self.secondary_item_type {
+            secondary_item_type.clone()
+        } else {
+            self.item_type.clone()
         }
     }
 }
 
-pub struct FilterReq {
-    get_req: GetReq,
-    filter: Filter,
-    pagination: Option<Pagination>,
-}
-
-impl FilterReq {
-    pub fn new(get_req: GetReq, filter: Filter) -> Self {
-        Self {
-            get_req,
-            filter,
-            pagination: None,
-        }
-    }
-}
-
-impl AddPagination for FilterReq {
-    fn add_pagination(mut self, pagination: Pagination) -> Self {
-        self.pagination = Some(pagination);
-        self
-    }
-}
-
-impl FilterReq {
-    pub(crate) fn get_url(&self) -> String {
-        let mut url = self.get_req.get_url();
-        url.push_str(&format!("?{}", self.filter.get_url()));
-        if let Some(pagination) = &self.pagination {
-            url.push_str(&pagination.get_url());
-        }
-        url
-    }
-}
-
-pub struct SortReq {
-    get_req: GetReq,
-    sort: Sort,
-    pagination: Option<Pagination>,
-}
-
-impl SortReq {
-    pub fn new(sort: Sort) -> Self {
-        let item_type: ItemType = sort.sort_by.clone().into();
-        let get_req = GetReq::new(item_type);
-        Self {
-            get_req,
-            sort,
-            pagination: None,
-        }
-    }
-
-    /// Create a new [`SortReq`] from a [`GetReq`] and a [`Sort`].
-    pub fn from_get_req(get_req: GetReq, sort: Sort) -> Self {
-        Self {
-            get_req,
-            sort,
-            pagination: None,
-        }
-    }
-}
-
-impl AddPagination for SortReq {
-    fn add_pagination(mut self, pagination: Pagination) -> Self {
-        self.pagination = Some(pagination);
-        self
-    }
-}
-
-impl SortReq {
-    pub(crate) fn get_url(&self) -> String {
-        let mut url = self.get_req.get_url();
-        url.push_str(&format!("?{}", self.sort.get_url()));
-        if let Some(pagination) = &self.pagination {
-            url.push_str(&pagination.get_url());
-        }
-        url
-    }
-}
-
-pub struct GetReq {
-    item_type: ItemType,
-    id: Option<String>,
-    pagination: Option<Pagination>,
-}
-
-impl AddPagination for GetReq {
-    fn add_pagination(mut self, pagination: Pagination) -> Self {
-        self.pagination = Some(pagination);
-        self
-    }
-}
-
-impl GetReq {
-    pub fn new(item_type: ItemType) -> Self {
-        Self {
-            item_type,
-            id: None,
-            pagination: None,
-        }
-    }
-    pub fn id(mut self, id: String) -> Self {
-        self.id = Some(id);
-        self
-    }
-
-    pub(crate) fn get_url(&self) -> String {
+impl GetUrl for Request {
+    fn get_url(&self) -> String {
         let mut url = String::from(self.item_type.get_url());
         if let Some(id) = &self.id {
             url.push_str(&format!("/{}", id));
         }
-        if let Some(pagination) = &self.pagination {
-            url.push_str(&pagination.get_url());
+        if let Some(secondary_item_type) = &self.secondary_item_type {
+            url.push_str(&format!("/{}", secondary_item_type.get_url()));
         }
+
+        let mut aditional_url = vec![];
+        if let Some(sort) = &self.sort {
+            aditional_url.push(sort.get_url());
+        }
+        if let Some(filter) = &self.filter {
+            aditional_url.push(filter.get_url());
+        }
+        if let Some(pagination) = &self.pagination {
+            aditional_url.push(pagination.get_url());
+        }
+
+        if !aditional_url.is_empty() {
+            url.push('?');
+            url.push_str(&aditional_url.join("&"));
+        }
+
         url
     }
 }
 
-pub struct SpecificReq {
-    get_req: GetReq,
-    second_item: ItemType,
-    pagination: Option<Pagination>,
-}
-
-impl SpecificReq {
-    pub fn new(get_req: GetReq, second_item: ItemType) -> Self {
-        Self {
-            get_req,
-            second_item,
-            pagination: None,
-        }
-    }
-
-    pub(crate) fn get_url(&self) -> String {
-        let mut url = self.get_req.get_url();
-        url.push_str(&format!("/{}", self.second_item.get_url()));
-        if let Some(pagination) = &self.pagination {
-            url.push_str(&pagination.get_url());
-        }
-        url
-    }
-}
-
+/// Wrapper for the [`reqwest::Client`] struct that contains the token
+/// and the actual url that is used to make the request.
+/// It is used to make requests to the API.
 pub(crate) struct Requester {
     token: String,
 }
@@ -186,6 +138,7 @@ impl Requester {
     pub(crate) fn new(token: String) -> Self {
         Self { token }
     }
+
     pub(crate) async fn get(&self, url: &str) -> Result<String, reqwest::Error> {
         let mut headers = HeaderMap::new();
         headers.insert(

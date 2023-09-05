@@ -1,12 +1,8 @@
 use lotr_api_wrapper::{
-    attribute::{Attribute, BookAttribute},
-    client::Client,
-    item::ItemType,
-    request::{
-        pagination::{AddPagination, Pagination},
-        FilterReq, GetReq, SortReq, SpecificReq,
-    },
-    Filter, Item, Operator, Request, Sort, SortOrder,
+    attribute::{Attribute, BookAttribute, CharacterAttribute},
+    pagination::Pagination,
+    request::RequestBuilder,
+    Client, Filter, GetUrl, Item, ItemType, Operator, Sort, SortOrder,
 };
 
 pub fn get_client() -> Client {
@@ -52,7 +48,7 @@ async fn test_chapter() {
 #[tokio::test]
 async fn test_get_books_request_builder() {
     let client = get_client();
-    let request = Request::Get(GetReq::new(ItemType::Book));
+    let request = RequestBuilder::new(ItemType::Book).build();
     let books = client.get(request).await.unwrap();
     assert!(books.len() > 0);
 }
@@ -67,8 +63,10 @@ async fn tets_get_aragorn_ii_quote() {
         .unwrap()
         ._id;
 
-    let get_req = GetReq::new(ItemType::Character).id(id.into());
-    let request = Request::Specific(SpecificReq::new(get_req, ItemType::Quote));
+    let request = RequestBuilder::new(ItemType::Character)
+        .id(id.into())
+        .secondary_item_type(ItemType::Quote)
+        .build();
 
     let quotes = client.get(request).await.unwrap();
     assert!(quotes.len() > 0);
@@ -78,18 +76,23 @@ async fn tets_get_aragorn_ii_quote() {
 async fn test_limit_offset_page() {
     let client = get_client();
     let pagination = Pagination::new(10, 10, 2);
-    let request = Request::Get(GetReq::new(ItemType::Quote).add_pagination(pagination));
-    let books = client.get(request).await.unwrap();
-    assert_eq!(books.len(), 10);
+    let request = RequestBuilder::new(ItemType::Character)
+        .pagination(pagination)
+        .build();
+    let characters = client.get(request).await.unwrap();
+    assert_eq!(characters.len(), 10);
 }
 
 #[tokio::test]
 async fn test_sort() {
     let client = get_client();
-    let request = Request::Sort(SortReq::new(Sort::new(
-        SortOrder::Ascending,
-        Attribute::Book(BookAttribute::Name),
-    )));
+    let request = RequestBuilder::new(ItemType::Book)
+        .sort(Sort::new(
+            SortOrder::Ascending,
+            Attribute::Book(BookAttribute::Name),
+        ))
+        .expect("Failed to build request, due to invalid sort")
+        .build();
     let books = client.get(request).await.unwrap();
     assert!(books.len() > 0);
     match books.first() {
@@ -101,19 +104,51 @@ async fn test_sort() {
 #[tokio::test]
 async fn test_filter() {
     let client = get_client();
-    let get_req = GetReq::new(ItemType::Book);
-    let request = Request::Filter(FilterReq::new(
-        get_req,
-        Filter::Match(
+    let request = RequestBuilder::new(ItemType::Book)
+        .filter(Filter::Match(
             Attribute::Book(BookAttribute::Name),
             Operator::Eq,
             vec!["The Fellowship Of The Ring".to_string()],
-        ),
-    ));
+        ))
+        .expect("Failed to build request, due to invalid filter")
+        .build();
+
     let books = client.get(request).await.unwrap();
     assert!(books.len() > 0);
     match books.first() {
         Some(Item::Book(book)) => assert_eq!(book.name, "The Fellowship Of The Ring"),
         _ => panic!("No books found"),
+    }
+}
+
+#[tokio::test]
+async fn test_filter_include() {
+    let client = get_client();
+
+    let request = RequestBuilder::new(ItemType::Character)
+        .filter(Filter::Match(
+            Attribute::Character(CharacterAttribute::Realm),
+            Operator::Eq,
+            vec!["Gondor".to_string(), "Rohan".to_string()],
+        ))
+        .expect("Failed to build request, due to invalid filter")
+        .build();
+
+    let characters = client.get(request).await.unwrap();
+
+    assert!(characters.len() > 0);
+
+    for character in characters {
+        match character {
+            Item::Character(character) => {
+                assert!(
+                    character.realm == Some("Gondor".to_string())
+                        || character.realm == Some("Rohan".to_string()),
+                    "Realm is not Gondor or Rohan, it is {:?}",
+                    character.realm
+                );
+            }
+            _ => panic!("No characters found"),
+        }
     }
 }
