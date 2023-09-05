@@ -1,8 +1,12 @@
+//! This module contains the structs that are used to make a request to the API.
+//! Here we define the [`Request`] struct and the [`RequestBuilder`] struct, which
+//! are the center of the custom request system.
+
 use reqwest::header::{self, HeaderMap, HeaderValue};
 
-use crate::{client::Error, Filter, ItemType, Sort};
+use crate::{Error, ItemType};
 
-use self::pagination::Pagination;
+use self::{filter::Filter, pagination::Pagination, sort::Sort};
 
 pub mod attributes;
 pub mod filter;
@@ -16,6 +20,26 @@ pub trait GetUrl {
     fn get_url(&self) -> String;
 }
 
+/// This struct is used to build a [`Request`].
+///
+/// # Example
+///
+/// ```
+/// use lotr_api::{Request, RequestBuilder, ItemType,
+///     sort::{Sort, SortOrder},
+///     request::GetUrl,
+///     attribute::{Attribute, BookAttribute}};
+///
+/// let request = RequestBuilder::new(ItemType::Book)
+///    .sort(Sort::new(
+///    SortOrder::Ascending,
+///    Attribute::Book(BookAttribute::Name),
+///    ))
+///    .build()
+///    .unwrap();
+///
+/// assert_eq!(request.get_url(), "book?sort=name:asc");
+/// ```
 pub struct RequestBuilder {
     request: Request,
 }
@@ -27,46 +51,168 @@ impl RequestBuilder {
         }
     }
 
+    /// Sets the id of the request. This is used to get a specific item.
     pub fn id(mut self, id: String) -> Self {
         self.request.id = Some(id);
         self
     }
 
+    /// Sets the secondary item type of the request. If you wish
+    /// to get a secondary item type, you need to set the id of the request.\
+    /// If not the `build` function will return an error.
+    ///
+    /// # Example
+    /// ```
+    /// use lotr_api::{ItemType, Request, RequestBuilder,
+    ///     request::GetUrl};
+    ///
+    /// let request = RequestBuilder::new(ItemType::Character)
+    ///     .id("123".to_string())
+    ///     .secondary_item_type(ItemType::Quote)
+    ///     .build()
+    ///     .unwrap();
+    ///
+    /// assert_eq!(request.get_url(), "character/123/quote");
+    ///   ```
+    ///
     pub fn secondary_item_type(mut self, secondary_item_type: ItemType) -> Self {
         self.request.secondary_item_type = Some(secondary_item_type);
         self
     }
 
-    pub fn sort(mut self, sort: Sort) -> Result<Self, Error> {
-        if sort.get_item_type() != self.request.get_item_type() {
-            return Err(Error::new(
-                "The sort attribute must be of the same type as the request".to_string(),
-            ));
-        }
+    /// Sets the sort of the request. If you wish to sort the results
+    /// of the request, the `sort_by` attribute of the `Sort` struct
+    /// must be of the same type as the item type of the request ( or the
+    /// secondary item type if it is set).
+    ///
+    /// # Example
+    /// ```
+    /// use lotr_api::{ItemType, Request, RequestBuilder,
+    ///     attribute::{Attribute, BookAttribute},
+    ///     request::GetUrl,
+    ///     sort::{Sort, SortOrder}};
+    ///
+    /// let request = RequestBuilder::new(ItemType::Book)
+    ///     .sort(Sort::new(
+    ///         SortOrder::Ascending,
+    ///         Attribute::Book(BookAttribute::Name),
+    ///     ))
+    ///     .build()
+    ///     .unwrap();
+    ///
+    /// assert_eq!(request.get_url(), "book?sort=name:asc");
+    /// ```
+    /// Failing to match the item type of the request results in an error.
+    /// ```
+    /// use lotr_api::{ItemType, Request, RequestBuilder,
+    ///     attribute::{Attribute, BookAttribute},
+    ///     request::GetUrl,
+    ///     sort::{ Sort, SortOrder}};
+    ///
+    ///  let request = RequestBuilder::new(ItemType::Character)
+    ///     .id("123".to_string())
+    ///     .secondary_item_type(ItemType::Quote)
+    ///     .sort(Sort::new(
+    ///         SortOrder::Ascending,
+    ///         Attribute::Book(BookAttribute::Name),
+    ///     ))
+    ///     .build();
+    ///
+    /// assert!(request.is_err());
+    /// ```
+    ///
+    pub fn sort(mut self, sort: Sort) -> Self {
         self.request.sort = Some(sort);
-        Ok(self)
+        self
     }
 
-    pub fn filter(mut self, filter: Filter) -> Result<Self, Error> {
-        if filter.get_item_type() != self.request.get_item_type() {
-            return Err(Error::new(
-                "The filter attribute must be of the same type as the request".to_string(),
-            ));
-        }
+    /// Sets the filter of the request. If you wish to filter the results
+    /// of the request, the `filter_by` attribute of the `Filter` struct
+    /// must be of the same type as the item type of the request ( or the
+    /// secondary item type if it is set).
+    ///
+    /// # Example
+    /// ```
+    /// use lotr_api::{ItemType, Request, RequestBuilder,
+    ///     attribute::{Attribute, BookAttribute},
+    ///     request::GetUrl,
+    ///     filter::{Filter, Operator}};
+    ///
+    /// let request = RequestBuilder::new(ItemType::Book)
+    ///     .filter(Filter::Match(
+    ///         Attribute::Book(BookAttribute::Name),
+    ///         Operator::Eq,
+    ///         vec!["The Fellowship of the Ring".to_string()],
+    ///     ))
+    ///     .build()
+    ///     .unwrap();
+    ///
+    /// assert_eq!(request.get_url(), "book?name=The Fellowship of the Ring");
+    /// ```
+    ///
+    /// Failing to match the item type of the request results in an error.
+    ///
+    /// ```
+    /// use lotr_api::{ItemType, Request, RequestBuilder,
+    ///     attribute::{Attribute, BookAttribute},
+    ///     request::GetUrl,
+    ///     filter::{Filter, Operator}};
+    ///
+    /// let request = RequestBuilder::new(ItemType::Character)
+    ///     .id("123".to_string())
+    ///     .secondary_item_type(ItemType::Quote)
+    ///     .filter(Filter::Match(
+    ///         Attribute::Book(BookAttribute::Name),
+    ///         Operator::Eq,
+    ///         vec!["The Fellowship of the Ring".to_string()],
+    ///     ))
+    ///     .build();
+    ///
+    /// assert!(request.is_err());
+    /// ```
+    pub fn filter(mut self, filter: Filter) -> Self {
         self.request.filter = Some(filter);
-        Ok(self)
+        self
     }
 
+    /// Sets the pagination of the request.
     pub fn pagination(mut self, pagination: Pagination) -> Self {
         self.request.pagination = Some(pagination);
         self
     }
 
-    pub fn build(self) -> Request {
-        self.request
+    /// Builds the request. If the request is invalid, an error is returned.
+    ///
+    /// # Errors
+    ///
+    /// A request is invalid if:
+    /// - The secondary item type is set but the id is not.
+    /// - The sort is set but the item type of the sort does not match the item type of the request.
+    /// - The filter is set but the item type of the filter does not match the item type of the request.
+    pub fn build(self) -> Result<Request, Error> {
+        let item_type = self.request.get_item_type();
+        if let Some(sort) = &self.request.sort {
+            if sort.get_item_type() != item_type {
+                return Err(Error::InvalidSort);
+            }
+        }
+        if let Some(filter) = &self.request.filter {
+            if filter.get_item_type() != item_type {
+                return Err(Error::InvalidFilter);
+            }
+        }
+        // Every secondary item type needs an id.
+        if self.request.secondary_item_type.is_some() && self.request.id.is_none() {
+            return Err(Error::InvalidSecondaryItemType);
+        }
+
+        Ok(self.request)
     }
 }
 
+/// This struct represents a request to the API.
+/// It should be created with the [`RequestBuilder`].
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Request {
     item_type: ItemType,
     id: Option<String>,
@@ -173,5 +319,109 @@ impl Requester {
     ) -> Result<String, reqwest::Error> {
         let url = request.get_url();
         self.get(&url).await
+    }
+}
+
+#[cfg(test)]
+mod tests {
+
+    use crate::{
+        attribute::{Attribute, BookAttribute, QuoteAttribute},
+        filter::Operator,
+        request::sort::SortOrder,
+    };
+
+    use super::*;
+
+    #[test]
+    fn test_simple_request_url() {
+        let request = RequestBuilder::new(ItemType::Book).build().unwrap();
+        assert_eq!(request.get_url(), "book");
+    }
+
+    #[test]
+    fn test_request_with_id_url() {
+        let request = RequestBuilder::new(ItemType::Book)
+            .id("123".to_string())
+            .build()
+            .unwrap();
+        assert_eq!(request.get_url(), "book/123");
+    }
+
+    #[test]
+    fn test_request_with_secondary_item_type_url() {
+        let request = RequestBuilder::new(ItemType::Book)
+            .secondary_item_type(ItemType::Chapter)
+            .build();
+        assert!(request.is_err());
+
+        let request = RequestBuilder::new(ItemType::Character)
+            .id("123".to_string())
+            .secondary_item_type(ItemType::Quote)
+            .build()
+            .unwrap();
+
+        assert_eq!(request.get_url(), "character/123/quote");
+    }
+
+    #[test]
+    fn test_request_with_sort_url() {
+        let request = RequestBuilder::new(ItemType::Book)
+            .sort(Sort::new(
+                SortOrder::Ascending,
+                Attribute::Book(BookAttribute::Name),
+            ))
+            .build()
+            .unwrap();
+
+        assert_eq!(request.get_url(), "book?sort=name:asc");
+    }
+
+    #[test]
+    fn test_request_with_filter_url() {
+        let request = RequestBuilder::new(ItemType::Book)
+            .filter(Filter::Match(
+                Attribute::Book(BookAttribute::Name),
+                Operator::Eq,
+                vec!["The Fellowship of the Ring".to_string()],
+            ))
+            .build()
+            .unwrap();
+
+        assert_eq!(request.get_url(), "book?name=The Fellowship of the Ring");
+    }
+
+    #[test]
+    fn test_request_with_pagination_url() {
+        let request = RequestBuilder::new(ItemType::Book)
+            .pagination(Pagination::new(10, 10, 2))
+            .build()
+            .unwrap();
+
+        assert_eq!(request.get_url(), "book?limit=10&offset=10&page=2");
+    }
+
+    #[test]
+    fn test_full_request_url() {
+        let request = RequestBuilder::new(ItemType::Character)
+            .id("123".to_string())
+            .secondary_item_type(ItemType::Quote)
+            .sort(Sort::new(
+                SortOrder::Ascending,
+                Attribute::Quote(QuoteAttribute::Dialog),
+            ))
+            .filter(Filter::Match(
+                Attribute::Quote(QuoteAttribute::Dialog),
+                Operator::Eq,
+                vec!["Deagol!".to_string()],
+            ))
+            .pagination(Pagination::new(10, 10, 2))
+            .build()
+            .unwrap();
+
+        assert_eq!(
+            request.get_url(),
+            "character/123/quote?sort=dialog:asc&dialog=Deagol!&limit=10&offset=10&page=2"
+        );
     }
 }

@@ -5,9 +5,13 @@ use super::GetUrl;
 /// A filter that can be used to filter the results of a request.
 ///
 /// # Examples
+///
 /// ```
-/// use lotr_api_wrapper::{Filter,  Operator, GetUrl,
-///     attribute::{Attribute, BookAttribute}};
+/// use lotr_api::{
+///     attribute::{Attribute, BookAttribute},
+///     request::GetUrl,
+///     filter::{Filter, Operator}};
+///
 ///
 ///
 /// let filter = Filter::Match(
@@ -17,7 +21,6 @@ use super::GetUrl;
 ///
 /// assert_eq!(filter.get_url(), "name=The Fellowship of the Ring");
 /// ```
-
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Filter {
     Match(Attribute, Operator, Vec<String>),
@@ -54,13 +57,20 @@ impl Filter {
     }
 }
 
+/// The operator used to compare the attribute and the values.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum Operator {
+    /// Equal to
     Eq,
+    /// Not equal to
     Ne,
+    /// Greater than
     Gt,
+    /// Less than
     Lt,
+    /// Greater than or equal to
     Gte,
+    /// Less than or equal to
     Lte,
 }
 

@@ -3,7 +3,7 @@
 /// # Example
 ///
 /// ```
-/// use lotr_api_wrapper::{GetUrl, request::pagination::Pagination};
+/// use lotr_api::{request::{GetUrl, pagination::Pagination}};
 ///
 /// let pagination = Pagination::new(10, 2, 1);
 ///

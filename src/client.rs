@@ -1,51 +1,18 @@
+//! Client definition. This is the main entry point for the library.
+//! It is used to make requests to the API. It is created with a token, which is used to authenticate the requests.
+//! You can get a token from <https://the-one-api.dev/>.
+
 use crate::{
-    item::{Book, Chapter, Character, Item, ItemType, Movie, Quote, Response},
     request::{Request, Requester},
+    Book, Chapter, Character, Error, Item, ItemType, Movie, Quote, Response,
 };
-
-/// The error type for this crate.
-/// It is used to harmonize the error types of the dependencies.
-#[derive(Debug)]
-pub struct Error {
-    pub message: String,
-}
-
-impl std::error::Error for Error {}
-
-impl std::fmt::Display for Error {
-    fn fmt(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(formatter, "{}", self.message)
-    }
-}
-
-impl From<reqwest::Error> for Error {
-    fn from(error: reqwest::Error) -> Self {
-        Self {
-            message: format!("reqwest error: {}", error),
-        }
-    }
-}
-
-impl From<serde_json::Error> for Error {
-    fn from(error: serde_json::Error) -> Self {
-        Self {
-            message: format!("serde_json error: {}", error),
-        }
-    }
-}
-
-impl Error {
-    pub fn new(message: String) -> Self {
-        Self { message }
-    }
-}
 
 /// The client for the one api to rule them all.
 /// It is used to make requests to the API.
 ///
 /// # Examples
 /// ```rust, no_run
-/// use lotr_api_wrapper::Client;
+/// use lotr_api::Client;
 ///
 /// #[tokio::main]
 /// async fn main() {
@@ -73,9 +40,7 @@ impl Client {
         T: serde::de::DeserializeOwned,
     {
         let response = self.requester.get(url).await?;
-        let response: Response<T> = serde_json::from_str(&response).or(Err(Error {
-            message: format!("Failed to deserialize response: {}", response),
-        }))?;
+        let response: Response<T> = serde_json::from_str(&response).map_err(Error::from)?;
         Ok(response)
     }
 
@@ -84,9 +49,7 @@ impl Client {
         T: serde::de::DeserializeOwned,
     {
         let response = self.requester.get_from_request(request).await?;
-        let response: Response<T> = serde_json::from_str(&response).or(Err(Error {
-            message: format!("Failed to deserialize response: {}", response),
-        }))?;
+        let response: Response<T> = serde_json::from_str(&response).map_err(Error::from)?;
         Ok(response)
     }
 
@@ -137,9 +100,9 @@ impl Client {
     pub async fn get_book_by_id(&self, id: &str) -> Result<Book, Error> {
         let url = format!("book/{}", id);
         let mut books = self.request_with_url::<Book>(&url).await?.get_contents();
-        books.pop().ok_or(Error {
-            message: format!("No book with id {} found", id),
-        })
+        books
+            .pop()
+            .ok_or(Error::Other("No book with id {} found".to_string()))
     }
 
     /// Returns the movie with the given id.
@@ -149,9 +112,9 @@ impl Client {
     pub async fn get_movie_by_id(&self, id: &str) -> Result<Movie, Error> {
         let url = format!("movie/{}", id);
         let mut movies = self.request_with_url::<Movie>(&url).await?.get_contents();
-        movies.pop().ok_or(Error {
-            message: format!("No movie with id {} found", id),
-        })
+        movies
+            .pop()
+            .ok_or(Error::Other("No movie with id {} found".to_string()))
     }
 
     /// Returns the quote with the given id.
@@ -161,9 +124,9 @@ impl Client {
     pub async fn get_quote_by_id(&self, id: &str) -> Result<Quote, Error> {
         let url = format!("quote/{}", id);
         let mut quotes = self.request_with_url::<Quote>(&url).await?.get_contents();
-        quotes.pop().ok_or(Error {
-            message: format!("No quote with id {} found", id),
-        })
+        quotes
+            .pop()
+            .ok_or(Error::Other("No quote with id {} found".to_string()))
     }
 
     /// Returns the character with the given id.
@@ -176,9 +139,9 @@ impl Client {
             .request_with_url::<Character>(&url)
             .await?
             .get_contents();
-        characters.pop().ok_or(Error {
-            message: format!("No character with id {} found", id),
-        })
+        characters
+            .pop()
+            .ok_or(Error::Other("No character with id {} found".to_string()))
     }
 
     /// Returns the chapter with the given id.
@@ -188,9 +151,9 @@ impl Client {
     pub async fn get_chapter_by_id(&self, id: &str) -> Result<Chapter, Error> {
         let url = format!("chapter/{}", id);
         let mut chapters = self.request_with_url::<Chapter>(&url).await?.get_contents();
-        chapters.pop().ok_or(Error {
-            message: format!("No chapter with id {} found", id),
-        })
+        chapters
+            .pop()
+            .ok_or(Error::Other("No chapter with id {} found".to_string()))
     }
 
     /// Returns the chapters of the given book.
@@ -218,8 +181,8 @@ impl Client {
     /// # Examples
     ///
     /// ```rust, no_run
-    /// use lotr_api_wrapper::{Client, ItemType};
-    /// use lotr_api_wrapper::item::Book;
+    /// use lotr_api::{Client, ItemType};
+    /// use lotr_api::Book;
     ///
     /// #[tokio::main]
     /// async fn main() {
@@ -238,6 +201,33 @@ impl Client {
     }
 
     /// Returns the items of the given custom request.
+    ///
+    /// # Examples
+    /// ```rust, no_run
+    /// use lotr_api::{
+    ///     attribute::{Attribute, BookAttribute},
+    ///     filter::{Filter, Operator},
+    ///     request::{
+    ///         sort::{Sort, SortOrder},
+    ///         RequestBuilder},
+    ///     Client, Item, ItemType};
+    ///
+    /// #[tokio::main]
+    /// async fn main() {
+    ///    let client = Client::new("your_token".to_string());
+    ///    let request = RequestBuilder::new(ItemType::Book)
+    ///         .filter(Filter::Match(
+    ///             Attribute::Book(BookAttribute::Name),
+    ///             Operator::Eq,
+    ///             vec!["The Fellowship of the Ring".to_string()])
+    ///         )
+    ///         .sort(Sort::new(SortOrder::Ascending, Attribute::Book(BookAttribute::Name)))
+    ///         .build()
+    ///        .expect("Failed to build request");
+    ///     let books = client.get(request).await.unwrap();
+    ///     // ...
+    /// }
+    ///     
     pub async fn get(&self, request: Request) -> Result<Vec<Item>, Error> {
         match request.get_item_type() {
             ItemType::Book => {

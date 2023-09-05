@@ -2,6 +2,18 @@ use crate::attribute::Attribute;
 
 use super::GetUrl;
 
+/// This struct contains the data for the sorting of the API.
+///
+/// # Example
+/// ```
+/// use lotr_api::{
+///     attribute::{Attribute, BookAttribute},
+///     sort::{Sort, SortOrder},
+///     request::{GetUrl}};
+///
+/// let sort = Sort::new(SortOrder::Ascending, Attribute::Book(BookAttribute::Name));
+/// assert_eq!(sort.get_url(), "sort=name:asc");
+/// ```
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct Sort {
     pub(crate) sort_type: SortOrder,
@@ -26,6 +38,7 @@ impl Sort {
     }
 }
 
+/// Define the sort order.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum SortOrder {
     Ascending,

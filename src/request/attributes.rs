@@ -1,11 +1,23 @@
-use crate::attribute::{
+use crate::{attribute::{
     Attribute, BookAttribute, ChapterAttribute, CharacterAttribute, MovieAttribute, QuoteAttribute,
-};
+}, ItemType};
 
 use super::GetUrl;
 
+impl GetUrl for ItemType {
+    fn get_url(&self) -> String {
+        match self {
+            ItemType::Book => "book",
+            ItemType::Movie => "movie",
+            ItemType::Quote => "quote",
+            ItemType::Character => "character",
+            ItemType::Chapter => "chapter",
+        }
+        .to_string()
+    }
+}
+
 impl GetUrl for Attribute {
-    /// Returns the url (in this case it corresponds to the name of the attribute) for the attribute.
     fn get_url(&self) -> String {
         match self {
             Self::Book(attribute) => attribute.get_url(),
