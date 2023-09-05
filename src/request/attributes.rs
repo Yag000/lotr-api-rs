@@ -1,6 +1,10 @@
-use crate::{attribute::{
-    Attribute, BookAttribute, ChapterAttribute, CharacterAttribute, MovieAttribute, QuoteAttribute,
-}, ItemType};
+use crate::{
+    attribute::{
+        Attribute, BookAttribute, ChapterAttribute, CharacterAttribute, MovieAttribute,
+        QuoteAttribute,
+    },
+    ItemType,
+};
 
 use super::GetUrl;
 

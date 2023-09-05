@@ -245,7 +245,7 @@ impl Request {
 
 impl GetUrl for Request {
     fn get_url(&self) -> String {
-        let mut url = String::from(self.item_type.get_url());
+        let mut url = self.item_type.get_url();
         if let Some(id) = &self.id {
             url.push_str(&format!("/{}", id));
         }
