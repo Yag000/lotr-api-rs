@@ -12,5 +12,5 @@ pub use request::filter::Filter;
 pub use request::filter::Operator;
 pub use request::sort::Sort;
 pub use request::sort::SortOrder;
+pub use request::pagination;
 pub use request::Request;
-pub use request::RequestBuilder;

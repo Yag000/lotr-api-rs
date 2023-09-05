@@ -4,13 +4,12 @@ use crate::attribute::Attribute;
 ///
 /// # Examples
 /// ```
-/// use lotr_api_wrapper::{Filter,  Operator, ItemType, RequestBuilder, attribute::{Attribute, BookAttribute}};
+/// use lotr_api_wrapper::{Filter,  Operator, ItemType, attribute::{Attribute, BookAttribute},Request, request::{GetReq, FilterReq}, client::Client};
+///
+///
 /// let filter = Filter::Match(Attribute::Book(BookAttribute::Name),Operator::Eq, vec!["The Fellowship of the Ring".to_string()]);
 ///
-/// let request = RequestBuilder::new()
-///     .item_type(ItemType::Book)
-///     .filter(filter)
-///     .build();
+/// let request = Request::Filter(FilterReq::new(GetReq::new(ItemType::Book), filter));
 ///
 /// assert_eq!(request.get_url(), "book?name=The Fellowship of the Ring");
 /// ```

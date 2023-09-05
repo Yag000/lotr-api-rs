@@ -2,8 +2,11 @@ use lotr_api_wrapper::{
     attribute::{Attribute, BookAttribute},
     client::Client,
     item::ItemType,
-    request::RequestBuilder,
-    Filter, Item, Operator, Sort, SortOrder,
+    request::{
+        pagination::{AddPagination, Pagination},
+        FilterReq, GetReq, SortReq, SpecificReq,
+    },
+    Filter, Item, Operator, Request, Sort, SortOrder,
 };
 
 pub fn get_client() -> Client {
@@ -49,7 +52,7 @@ async fn test_chapter() {
 #[tokio::test]
 async fn test_get_books_request_builder() {
     let client = get_client();
-    let request = RequestBuilder::default().item_type(ItemType::Book).build();
+    let request = Request::Get(GetReq::new(ItemType::Book));
     let books = client.get(request).await.unwrap();
     assert!(books.len() > 0);
 }
@@ -64,11 +67,8 @@ async fn tets_get_aragorn_ii_quote() {
         .unwrap()
         ._id;
 
-    let request = RequestBuilder::default()
-        .item_type(ItemType::Character)
-        .id(id.clone())
-        .second_item(ItemType::Quote)
-        .build();
+    let get_req = GetReq::new(ItemType::Character).id(id.into());
+    let request = Request::Specific(SpecificReq::new(get_req, ItemType::Quote));
 
     let quotes = client.get(request).await.unwrap();
     assert!(quotes.len() > 0);
@@ -77,12 +77,8 @@ async fn tets_get_aragorn_ii_quote() {
 #[tokio::test]
 async fn test_limit_offset_page() {
     let client = get_client();
-    let request = RequestBuilder::default()
-        .item_type(ItemType::Quote)
-        .limit(10)
-        .offset(10)
-        .page(1)
-        .build();
+    let pagination = Pagination::new(10, 10, 2);
+    let request = Request::Get(GetReq::new(ItemType::Quote).add_pagination(pagination));
     let books = client.get(request).await.unwrap();
     assert_eq!(books.len(), 10);
 }
@@ -90,13 +86,10 @@ async fn test_limit_offset_page() {
 #[tokio::test]
 async fn test_sort() {
     let client = get_client();
-    let request = RequestBuilder::default()
-        .item_type(ItemType::Book)
-        .sort(Sort::new(
-            SortOrder::Ascending,
-            Attribute::Book(BookAttribute::Name),
-        ))
-        .build();
+    let request = Request::Sort(SortReq::new(Sort::new(
+        SortOrder::Ascending,
+        Attribute::Book(BookAttribute::Name),
+    )));
     let books = client.get(request).await.unwrap();
     assert!(books.len() > 0);
     match books.first() {
@@ -108,14 +101,15 @@ async fn test_sort() {
 #[tokio::test]
 async fn test_filter() {
     let client = get_client();
-    let request = RequestBuilder::default()
-        .item_type(ItemType::Book)
-        .filter(Filter::Match(
+    let get_req = GetReq::new(ItemType::Book);
+    let request = Request::Filter(FilterReq::new(
+        get_req,
+        Filter::Match(
             Attribute::Book(BookAttribute::Name),
             Operator::Eq,
             vec!["The Fellowship Of The Ring".to_string()],
-        ))
-        .build();
+        ),
+    ));
     let books = client.get(request).await.unwrap();
     assert!(books.len() > 0);
     match books.first() {
