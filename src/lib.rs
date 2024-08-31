@@ -42,8 +42,7 @@
 //! # Features
 //!
 //! - [`Client`] functions to get all items of a type .
-//! - [`RequestBuilder`] to build a request with filters, pagination and sorting, which allows the
-//! user full control over the request without having to deal with the url.
+//! - [`RequestBuilder`] to build a request with filters, pagination and sorting, which allows the user full control over the request without having to deal with the url.
 //!
 //!
 
