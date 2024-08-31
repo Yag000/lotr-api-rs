@@ -106,18 +106,20 @@ async fn test_limit_offset_page() {
 #[tokio::test]
 async fn test_sort() {
     let client = get_client();
-    let request = RequestBuilder::new(ItemType::Book)
+    let request = RequestBuilder::new(ItemType::Character)
         .sort(Sort::new(
             SortOrder::Ascending,
-            Attribute::Book(BookAttribute::Name),
+            Attribute::Character(CharacterAttribute::Name),
         ))
         .build()
         .expect("Failed to build request");
-    let books = client.get(request).await.unwrap();
-    assert!(books.len() > 0);
-    match books.first() {
-        Some(Item::Book(book)) => assert_eq!(book.name, "The Fellowship Of The Ring"),
-        _ => panic!("No books found"),
+    let characters = client.get(request).await.unwrap();
+    assert!(characters.len() > 0);
+    match characters.first() {
+        Some(Item::Character(character)) => {
+            assert_eq!(character.name, "Adaldrida (Bolger) Brandybuck")
+        }
+        _ => panic!("No character found"),
     }
 }
 
