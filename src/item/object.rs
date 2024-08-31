@@ -83,7 +83,9 @@ pub struct Movie {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Quote {
     pub _id: String,
-    pub dialog: String,
+    // This should be a String but until https://github.com/gitfrosh/lotr-api/issues/151 gets
+    // resolved it must be an optional value
+    pub dialog: Option<String>,
     pub movie: String,
     pub character: String,
     pub id: String,

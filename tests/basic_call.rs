@@ -37,6 +37,15 @@ async fn test_quote() {
     assert!(quotes.len() > 0);
 }
 
+// Reminder to update the quote limit if it ever changes
+#[tokio::test]
+async fn test_quote_number() {
+    let client = get_client();
+    let quotes = client.get_quotes().await.unwrap();
+
+    assert_eq!(quotes.len(), 2384);
+}
+
 #[tokio::test]
 async fn test_character() {
     let client = get_client();
