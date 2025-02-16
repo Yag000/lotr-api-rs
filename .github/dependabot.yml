@@ -6,13 +6,3 @@ updates:
     target-branch: "main"
     schedule:
       interval: "monthly"
-
-  # Security updates (run daily)
-  - package-ecosystem: "cargo"
-    directory: "/"
-    schedule:
-      interval: "daily"
-    ignore:
-      - dependency-name: "*" # Ensure only security updates are included
-    commit-message:
-      prefix: "security"
