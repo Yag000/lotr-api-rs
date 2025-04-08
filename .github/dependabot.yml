@@ -1,6 +1,5 @@
 version: 2
 updates:
-  # General updates (run monthly)
   - package-ecosystem: "cargo"
     directory: "/"
     target-branch: "main"
