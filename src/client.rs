@@ -68,7 +68,7 @@ impl Client {
 
     /// Returns all the quotes. Due to the API default limit of 1000,
     /// this function has to set a hardcoded limit.
-    /// Currently there are  2384 quotes on the api, so we call it with a limit of 2400
+    /// Currently there are  2383 quotes on the api, so we call it with a limit of 2400
     /// to have a little bit of buffer in case the number of quotes increases
     pub async fn get_quotes(&self) -> Result<Vec<Quote>, Error> {
         Ok(self

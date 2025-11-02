@@ -43,7 +43,7 @@ async fn test_quote_number() {
     let client = get_client();
     let quotes = client.get_quotes().await.unwrap();
 
-    assert_eq!(quotes.len(), 2384);
+    assert_eq!(quotes.len(), 2383);
 }
 
 #[tokio::test]
